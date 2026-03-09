@@ -1,0 +1,19 @@
+---
+- name: Configuration L2/L3 des commutateurs
+  hosts: switches
+  become: yes
+  roles:
+    - config_vlan
+
+- name: Configuration Redondance et Serveur NFS
+  hosts: serveur_nfs
+  become: yes
+  roles:
+    - config_bond
+    - config_nfs
+
+- name: Configuration Clients NFS
+  hosts: clients_nfs
+  become: yes
+  roles:
+    - config_nfs
