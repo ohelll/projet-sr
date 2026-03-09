@@ -1,0 +1,77 @@
+---
+# ==========================================
+# SWITCH 1 : Accès Machine 1 (VLAN 1) + Serveur NFS (VLAN 3)
+# ==========================================
+- name: Configuration L2 pour Switch 1
+  hosts: switch1
+  become: yes
+  tasks:
+    - name: Configurer les interfaces L2 via NCLU
+      cumulus_nclu:
+        commands:
+          - add bridge bridge ports swp1,swp2,swp3,swp4
+          - add bridge bridge vlan-aware yes
+          # Tolérance de panne du serveur : Agrégation de liens (Bonding/LACP) 
+          - add bond bond-serveur slaves swp2,swp3
+          - add interface bond-serveur bridge access 3
+          # Port vers Machine 1
+          - add interface swp1 bridge access 1
+          # Trunk vers Switch 3 (laisse passer uniquement M1 et le serveur)
+          - add interface swp4 bridge trunk vlans 1,3
+          - commit
+
+# ==========================================
+# SWITCH 2 : Accès Machine 2 (VLAN 2)
+# ==========================================
+- name: Configuration L2 pour Switch 2
+  hosts: switch2
+  become: yes
+  tasks:
+    - name: Configurer les interfaces L2 via NCLU
+      cumulus_nclu:
+        commands:
+          - add bridge bridge ports swp1,swp2
+          - add bridge bridge vlan-aware yes
+          # Port vers Machine 2
+          - add interface swp1 bridge access 2
+          # Trunk vers Switch 3 (laisse passer uniquement M2)
+          - add interface swp2 bridge trunk vlans 2
+          - commit
+
+# ==========================================
+# SWITCH 3 : Cœur de réseau (Routage L3 + Filtrage)
+# ==========================================
+- name: Configuration L3 et Filtrage pour Switch 3
+  hosts: switch3
+  become: yes
+  tasks:
+    - name: Configurer le routage inter-VLAN via NCLU
+      cumulus_nclu:
+        commands:
+          - add bridge bridge ports swp1,swp2
+          - add bridge bridge vlan-aware yes
+          # Trunks venant de S1 et S2
+          - add interface swp1 bridge trunk vlans 1,3
+          - add interface swp2 bridge trunk vlans 2
+          # Création des passerelles L3 pour permettre le routage 
+          - add vlan 1 ip address 192.168.1.254/24
+          - add vlan 2 ip address 192.168.2.254/24
+          - add vlan 3 ip address 192.168.3.254/24
+          - commit
+
+    # ---------------------------------------------------------
+    # RÈGLES DE FILTRAGE (Pour valider la consigne d'isolation) [cite: 37]
+    # ---------------------------------------------------------
+    - [cite_start]name: Bloquer le trafic (ping/ssh) de Machine 1 vers Machine 2 [cite: 47]
+      iptables:
+        chain: FORWARD
+        source: 192.168.1.0/24
+        destination: 192.168.2.0/24
+        jump: DROP
+
+    - [cite_start]name: Bloquer le trafic (ping/ssh) de Machine 2 vers Machine 1 [cite: 47]
+      iptables:
+        chain: FORWARD
+        source: 192.168.2.0/24
+        destination: 192.168.1.0/24
+        jump: DROP
