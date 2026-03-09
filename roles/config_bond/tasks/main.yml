@@ -12,7 +12,7 @@
       # L'interface virtuelle agrégée (IP du serveur NFS)
       auto bond0
       iface bond0 inet static
-          address 192.168.195.200
+          address 192.168.195.150
           netmask 255.255.255.0
           bond-slaves ens34 ens35
           bond-mode 4
