@@ -1,71 +1,22 @@
 ---
-# === CONFIGURATION DES IPS (Masque /26 = 255.255.255.192) ===
-- name: Configuration des interfaces de production
-  hosts: clients_nfs
-  become: yes
-  tasks:
-    - name: Configurer l'IP de production
-      ansible.builtin.copy:
-        dest: /etc/network/interfaces.d/lan_prod
-        content: |
-          auto ens34
-          iface ens34 inet static
-              address {{ item.ip }}
-              netmask 255.255.255.192
-      loop:
-        - { host: 'machine1', ip: '192.168.160.1' }  # VLAN 1
-        - { host: 'machine2', ip: '192.168.160.100' } # VLAN 2
-      when: inventory_hostname == item.host
+# Ce fichier ne contient QUE les tâches, pas de "hosts" ou de "tasks:" en haut.
 
-    - name: Redémarrer le réseau pour appliquer l'IP de prod
-      ansible.builtin.service:
-        name: networking
-        state: restarted
+- name: Installer les outils client NFS
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+    update_cache: yes
 
-# === PARTIE SERVEUR NFS ===
-- name: Configuration Serveur NFS
-  hosts: serveur_fichier
-  become: yes
-  tasks:
-    - name: Installer le serveur NFS
-      ansible.builtin.apt:
-        name: nfs-kernel-server
-        state: present
-        update_cache: yes
+- name: Créer le point de montage
+  ansible.builtin.file:
+    path: "/mnt/nfs_serveur"
+    state: directory
+    mode: '0755'
 
-    - name: Créer les répertoires de partage
-      ansible.builtin.file:
-        path: "/home/partage_{{ item }}"
-        state: directory
-        mode: '0777'
-      loop:
-        - machine1
-        - machine2
-
-    - name: Exposer les partages (Version 3)
-      ansible.builtin.copy:
-        dest: /etc/exports
-        content: |
-          /home/partage_machine1 192.168.160.0/26(rw,sync,no_subtree_check)
-          /home/partage_machine2 192.168.160.64/26(rw,sync,no_subtree_check)
-      notify: Relancer NFS
-
-  handlers:
-    - name: Relancer NFS
-      ansible.builtin.service:
-        name: nfs-kernel-server
-        state: restarted
-
-# === PARTIE CLIENTS NFS ===
-- name: Configuration Clients NFS
-  hosts: clients_nfs
-  become: yes
-  tasks:
-    - name: Installer les outils client NFS
-      ansible.builtin.apt:
-        name: nfs-common
-        state: present
-        update_cache: yes
-
-    - name: Créer le point de montage
-      ansible.builtin.file:
+- name: Monter le dossier distant
+  ansible.builtin.mount:
+    path: "/mnt/nfs_serveur"
+    src: "192.168.160.150:/home/partage_{{ inventory_hostname }}"
+    fstype: nfs
+    opts: "nfsvers=3,rw,sync"
+    state: mounted
