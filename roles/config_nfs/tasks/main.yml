@@ -1,17 +1,28 @@
 ---
-# Ce fichier ne contient QUE les tâches, pas de "hosts" ou de "tasks:" en haut.
+# === TACHES POUR LE SERVEUR ===
+- name: Installer le serveur NFS
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: yes
+  when: inventory_hostname in groups['serveur_nfs']
 
+- name: Exposer les partages
+  ansible.builtin.copy:
+    dest: /etc/exports
+    content: |
+      /home/partage_machine1 192.168.160.0/26(rw,sync,no_subtree_check)
+      /home/partage_machine2 192.168.160.64/26(rw,sync,no_subtree_check)
+  when: inventory_hostname in groups['serveur_nfs']
+  notify: Relancer NFS
+
+# === TACHES POUR LES CLIENTS ===
 - name: Installer les outils client NFS
   ansible.builtin.apt:
     name: nfs-common
     state: present
     update_cache: yes
-
-- name: Créer le point de montage
-  ansible.builtin.file:
-    path: "/mnt/nfs_serveur"
-    state: directory
-    mode: '0755'
+  when: inventory_hostname in groups['clients_nfs']
 
 - name: Monter le dossier distant
   ansible.builtin.mount:
@@ -20,3 +31,4 @@
     fstype: nfs
     opts: "nfsvers=3,rw,sync"
     state: mounted
+  when: inventory_hostname in groups['clients_nfs']
