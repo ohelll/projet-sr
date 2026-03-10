@@ -32,3 +32,5 @@
   ansible.builtin.service:
     name: networking
     state: restarted
+  async: 1
+  poll: 0
