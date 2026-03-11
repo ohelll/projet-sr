@@ -31,6 +31,6 @@
 
 - name: Recharger le bonding
   ansible.builtin.shell: |
-    ifdown bond0 2>/dev/null || true
-    modprobe bonding
-    ifup bond0
+    /sbin/ifdown bond0 2>/dev/null || true
+    /sbin/modprobe bonding
+    /sbin/ifup bond0
