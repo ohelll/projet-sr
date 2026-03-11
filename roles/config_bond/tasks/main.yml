@@ -4,7 +4,12 @@
     name: ifenslave
     state: present
 
-- name: Ecrire la configuration du Bond0 (LAN 2 et 3)
+- name: Activer le module noyau bonding
+  ansible.builtin.modprobe:
+    name: bonding
+    state: present
+
+- name: Ecrire la configuration du Bond0 (Simplifiee)
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
@@ -19,18 +24,8 @@
           bond-lacp-rate 1
           bond-xmit-hash-policy layer3+4
 
-      auto ens34
-      iface ens34 inet manual
-          bond-master bond0
-
-      auto ens35
-      iface ens35 inet manual
-          bond-master bond0
-
-- name: Force le nettoyage et redemarrage reseau
+- name: Vider les IP et relancer le reseau
   ansible.builtin.shell: |
-    ip link set ens34 down || true
-    ip link set ens35 down || true
     ip addr flush ens34 || true
     ip addr flush ens35 || true
     systemctl restart networking
