@@ -34,14 +34,14 @@
 
 - name: Activer bond0 sans toucher a ens33
   ansible.builtin.shell: |
-    ifdown ens34 2>/dev/null || true
-    ifdown ens35 2>/dev/null || true
-    ifdown bond0 2>/dev/null || true
+    /sbin/ifdown ens34 2>/dev/null || true
+    /sbin/ifdown ens35 2>/dev/null || true
+    /sbin/ifdown bond0 2>/dev/null || true
 
-    ip addr flush dev ens34 || true
-    ip addr flush dev ens35 || true
+    /sbin/ip addr flush dev ens34 || true
+    /sbin/ip addr flush dev ens35 || true
 
-    ifup ens34
-    ifup ens35
-    ifup bond0
+    /sbin/ifup ens34
+    /sbin/ifup ens35
+    /sbin/ifup bond0
   become: yes
