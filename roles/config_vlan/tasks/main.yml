@@ -1,5 +1,5 @@
 ---
-# === SWITCH 1 (Accès M1 + Serveur) ===
+# === SWITCH 1 (Accès M1 sur LAN 1 + Serveur sur LAN 2/3) ===
 - name: Configurer Switch 1
   ansible.builtin.command: "{{ item }}"
   loop:
@@ -12,7 +12,7 @@
     - net commit
   when: inventory_hostname == 'switch1'
 
-# === SWITCH 2 (Accès M2) ===
+# === SWITCH 2 (Accès M2 sur LAN 6) ===
 - name: Configurer Switch 2
   ansible.builtin.command: "{{ item }}"
   loop:
@@ -22,7 +22,7 @@
     - net commit
   when: inventory_hostname == 'switch2'
 
-# === SWITCH 3 (Cœur / Routage / Isolation) ===
+# === SWITCH 3 (Cœur LAN 4/5 + Routage + Isolation) ===
 - name: Configurer Switch 3
   ansible.builtin.command: "{{ item }}"
   loop:
@@ -35,7 +35,7 @@
     - net commit
   when: inventory_hostname == 'switch3'
 
-# === RÈGLES D'ISOLATION SUR SWITCH 3 ===
+# === RÈGLES D'ISOLATION (iptables sur Switch 3) ===
 - name: ISOLATION - Bloquer M1 <-> M2
   ansible.builtin.iptables:
     chain: FORWARD
