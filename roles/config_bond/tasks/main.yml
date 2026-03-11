@@ -1,5 +1,10 @@
 ---
-- name: Configurer le Bond Serveur (LAN 2 et 3)
+- name: Installer le paquet ifenslave
+  ansible.builtin.apt:
+    name: ifenslave
+    state: present
+
+- name: Configurer le Bond Serveur
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
