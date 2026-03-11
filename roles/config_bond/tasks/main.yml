@@ -29,7 +29,6 @@
       auto ens35
       iface ens35 inet manual
           bond-master bond0
-    
 
 - name: Recharger le bonding
   ansible.builtin.shell: |
