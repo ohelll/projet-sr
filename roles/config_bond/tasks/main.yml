@@ -1,29 +1,28 @@
 ---
-- name: Installer le paquet ifenslave 
+- name: Installer le paquet ifenslave
   ansible.builtin.apt:
     name: ifenslave
     state: present
-    update_cache: yes
 
 - name: Configurer l'interface agrégée (bond0) et ses interfaces physiques
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
-      # L'interface virtuelle agrégée (IP du serveur NFS)
       auto bond0
       iface bond0 inet static
-          address 192.168.195.150
-          netmask 255.255.255.0
+          address 192.168.160.150
+          netmask 255.255.255.192
+          gateway 192.168.160.190
           bond-slaves ens34 ens35
           bond-mode 4
           bond-miimon 100
+          bond-lacp-rate 1
+          bond-xmit-hash-policy layer3+4
 
-      # Interface physique 1 (Esclave)
       auto ens34
       iface ens34 inet manual
           bond-master bond0
 
-      # Interface physique 2 (Esclave)
       auto ens35
       iface ens35 inet manual
           bond-master bond0
@@ -32,5 +31,3 @@
   ansible.builtin.service:
     name: networking
     state: restarted
-  async: 1
-  poll: 0
