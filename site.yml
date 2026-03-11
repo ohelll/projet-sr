@@ -5,18 +5,20 @@
   roles:
     - config_vlan
 
-- name: Configurer le Serveur
+- name: Configurer le serveur NFS
   hosts: serveur_fichier
   become: yes
   roles:
     - config_bond
     - config_nfs
 
-- name: Configurer Machine 1
-  hosts: machine1
+- name: Configurer les clients
+  hosts: clients
   become: yes
+
   tasks:
-    - name: IP Prod M1
+
+    - name: Config IP machine1
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -25,16 +27,9 @@
               address 192.168.160.1
               netmask 255.255.255.192
               gateway 192.168.160.254
-    - name: Forcer l'allumage de la carte M1
-      ansible.builtin.shell: |
-        /sbin/ip addr flush dev ens34 || true
-        /sbin/ifup ens34
+      when: inventory_hostname == "machine1"
 
-- name: Configurer Machine 2
-  hosts: machine2
-  become: yes
-  tasks:
-    - name: IP Prod M2
+    - name: Config IP machine2
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -43,13 +38,15 @@
               address 192.168.160.100
               netmask 255.255.255.192
               gateway 192.168.160.126
-    - name: Forcer l'allumage de la carte M2
-      ansible.builtin.shell: |
-        /sbin/ip addr flush dev ens34 || true
-        /sbin/ifup ens34
+      when: inventory_hostname == "machine2"
 
-- name: Monter NFS sur les clients
-  hosts: machine1, machine2
+    - name: Redémarrer interface
+      ansible.builtin.shell: |
+        ip addr flush dev ens34 || true
+        ifup ens34
+
+- name: Monter le NFS sur les clients
+  hosts: clients
   become: yes
   roles:
     - config_nfs
