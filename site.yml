@@ -18,7 +18,7 @@
 
   tasks:
 
-    - name: Config IP machine1
+   - name: Config IP machine1
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -26,7 +26,7 @@
           iface ens34 inet static
               address 192.168.160.1
               netmask 255.255.255.192
-              gateway 192.168.160.254
+              gateway 192.168.160.62        
       when: inventory_hostname == "machine1"
 
     - name: Config IP machine2
