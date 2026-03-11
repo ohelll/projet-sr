@@ -9,7 +9,7 @@
     name: bonding
     state: present
 
-- name: Ecrire la configuration du Bond0 (Syntaxe Anti-Bug)
+- name: Ecrire la configuration du Bond0
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
@@ -32,23 +32,12 @@
       iface ens35 inet manual
           bond-master bond0
 
-- name: Tenter de relancer le reseau
-  ansible.builtin.shell: systemctl restart networking
+- name: Activer le bond0 sans toucher a ens33
+  ansible.builtin.shell: |
+    ifdown ens34 ens35 bond0 2>/dev/null || true
+    ip addr flush ens34 || true
+    ip addr flush ens35 || true
+    ifup ens34
+    ifup ens35
+    ifup bond0
   become: yes
-  register: restart_result
-  ignore_errors: yes
-
-- name: Recuperer les logs en cas de crash
-  ansible.builtin.command: journalctl -u networking.service -n 15 --no-pager
-  when: restart_result.failed
-  register: crash_logs
-
-- name: 🚨 LA VRAIE ERREUR EST ICI 🚨
-  ansible.builtin.debug:
-    var: crash_logs.stdout_lines
-  when: restart_result.failed
-
-- name: Stopper le playbook si echec
-  ansible.builtin.fail:
-    msg: "Le reseau a plante. Regarde les lignes vertes juste au-dessus pour voir le probleme exact !"
-  when: restart_result.failed
