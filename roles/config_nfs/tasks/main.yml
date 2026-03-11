@@ -6,7 +6,14 @@
     state: present
   when: inventory_hostname == 'serveur_fichier'
 
-- name: Exposer les partages
+- name: Créer le répertoire à partager
+  ansible.builtin.file:
+    path: /home/partage
+    state: directory
+    mode: '0777'
+  when: inventory_hostname == 'serveur_fichier'
+
+- name: Exposer les partages (Autorise tout le réseau 192.168.160.0/24)
   ansible.builtin.copy:
     dest: /etc/exports
     content: |
@@ -21,13 +28,13 @@
     state: present
   when: inventory_hostname != 'serveur_fichier'
 
-- name: Créer le dossier de montage local
+- name: Créer le point de montage sur les clients
   ansible.builtin.file:
     path: /mnt/nfs_serveur
     state: directory
   when: inventory_hostname != 'serveur_fichier'
 
-- name: Monter le dossier distant
+- name: Monter le partage NFS
   ansible.posix.mount:
     path: /mnt/nfs_serveur
     src: 192.168.160.150:/home/partage
