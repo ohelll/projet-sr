@@ -1,10 +1,5 @@
 ---
-- name: Installer le paquet ifenslave
-  ansible.builtin.apt:
-    name: ifenslave
-    state: present
-
-- name: Configurer l'interface agrégée (bond0) et ses interfaces physiques
+- name: Configurer le Bond Serveur (LAN 2 et 3)
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
@@ -13,22 +8,21 @@
           address 192.168.160.150
           netmask 255.255.255.192
           gateway 192.168.160.190
-          bond-slaves ens33 ens34
+          bond-slaves ens34 ens35
           bond-mode 4
           bond-miimon 100
           bond-lacp-rate 1
           bond-xmit-hash-policy layer3+4
-          bond-downdelay 200
-
-      auto ens33
-      iface ens33 inet manual
-          bond-master bond0
 
       auto ens34
       iface ens34 inet manual
           bond-master bond0
 
-- name: Redémarrer le service réseau pour appliquer le Bonding
+      auto ens35
+      iface ens35 inet manual
+          bond-master bond0
+
+- name: Relancer le réseau
   ansible.builtin.service:
     name: networking
     state: restarted
