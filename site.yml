@@ -25,9 +25,10 @@
               address 192.168.160.1
               netmask 255.255.255.192
               gateway 192.168.160.254
-    - ansible.builtin.service:
-        name: networking
-        state: restarted
+    - name: Forcer l'allumage de la carte M1
+      ansible.builtin.shell: |
+        /sbin/ip addr flush dev ens34 || true
+        /sbin/ifup ens34
 
 - name: Configurer Machine 2
   hosts: machine2
@@ -42,9 +43,10 @@
               address 192.168.160.100
               netmask 255.255.255.192
               gateway 192.168.160.126
-    - ansible.builtin.service:
-        name: networking
-        state: restarted
+    - name: Forcer l'allumage de la carte M2
+      ansible.builtin.shell: |
+        /sbin/ip addr flush dev ens34 || true
+        /sbin/ifup ens34
 
 - name: Monter NFS sur les clients
   hosts: machine1, machine2
