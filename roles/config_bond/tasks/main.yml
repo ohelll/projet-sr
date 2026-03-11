@@ -1,10 +1,10 @@
 ---
-- name: Installer ifenslave
+- name: "Installer ifenslave"
   ansible.builtin.apt:
     name: ifenslave
     state: present
 
-- name: Ecrire la configuration du Bond0
+- name: "Ecrire la configuration du Bond0"
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
@@ -12,7 +12,6 @@
       iface bond0 inet static
           address 192.168.160.150
           netmask 255.255.255.192
-          # On remplace le 'gateway' global par une route ciblee pour eviter le crash RTNETLINK
           up ip route add 192.168.160.0/24 via 192.168.160.190 dev bond0 || true
           bond-slaves ens34 ens35
           bond-mode 4
@@ -28,20 +27,14 @@
       iface ens35 inet manual
           bond-master bond0
 
-- name: Destruction de l'ancien bond et activation propre
+- name: "Destruction du bond et activation propre"
   ansible.builtin.shell: |
-    # On eteint tout
     /sbin/ifdown bond0 ens34 ens35 2>/dev/null || true
-    # On force la destruction du bond dans le noyau pour eviter l'erreur I/O
     /sbin/ip link delete bond0 2>/dev/null || true
     /sbin/modprobe -r bonding 2>/dev/null || true
-    
-    # On recharge le noyau et on nettoie les IPs
     /sbin/modprobe bonding
     /sbin/ip addr flush dev ens34 2>/dev/null || true
     /sbin/ip addr flush dev ens35 2>/dev/null || true
-    
-    # On rallume proprement
     /sbin/ifup ens34
     /sbin/ifup ens35
     /sbin/ifup bond0
