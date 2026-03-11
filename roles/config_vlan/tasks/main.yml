@@ -1,1 +1,49 @@
+---
+- name: Configurer Switch 1 (Accès M1 + Serveur LACP)
+  cumulus_nclu:
+    commands:
+      - add bridge bridge vlan-aware yes
+      - add bond bond-serveur slaves swp2,swp3
+      - add bond bond-serveur bond-mode 4
+      - add interface bond-serveur bridge access 3
+      - add interface swp1 bridge access 1
+      - add interface swp4 bridge trunk vlans 1,3
+      - commit
+  when: inventory_hostname == 'switch1'
 
+- name: Configurer Switch 2 (Accès M2)
+  cumulus_nclu:
+    commands:
+      - add bridge bridge vlan-aware yes
+      - add interface swp1 bridge access 2
+      - add interface swp2 bridge trunk vlans 2
+      - commit
+  when: inventory_hostname == 'switch2'
+
+- name: Configurer Switch 3 (Passerelles et Trunks)
+  cumulus_nclu:
+    commands:
+      - add bridge bridge vlan-aware yes
+      - add interface swp1 bridge trunk vlans 1,3
+      - add interface swp2 bridge trunk vlans 2
+      - add vlan 1 ip address 192.168.160.254/26
+      - add vlan 2 ip address 192.168.160.126/26
+      - add vlan 3 ip address 192.168.160.190/26
+      - commit
+  when: inventory_hostname == 'switch3'
+
+- name: ISOLATION - Bloquer le trafic de M1 vers M2
+  iptables:
+    chain: FORWARD
+    source: 192.168.160.0/26
+    destination: 192.168.160.64/26
+    jump: DROP
+  when: inventory_hostname == 'switch3'
+
+- name: ISOLATION - Bloquer le trafic de M2 vers M1
+  iptables:
+    chain: FORWARD
+    source: 192.168.160.64/26
+    destination: 192.168.160.0/26
+    jump: DROP
+  when: inventory_hostname == 'switch3'
