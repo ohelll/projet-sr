@@ -1,10 +1,13 @@
 ---
-- name: "Installer ifenslave"
+- name: Installer bonding
   ansible.builtin.apt:
-    name: ifenslave
+    name:
+      - ifenslave
+      - net-tools
     state: present
+    update_cache: yes
 
-- name: "Ecrire la configuration du Bond0"
+- name: Configurer bond0
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
@@ -12,7 +15,6 @@
       iface bond0 inet static
           address 192.168.160.150
           netmask 255.255.255.192
-          up ip route add 192.168.160.0/24 via 192.168.160.190 dev bond0 || true
           bond-slaves ens34 ens35
           bond-mode 4
           bond-miimon 100
@@ -27,15 +29,8 @@
       iface ens35 inet manual
           bond-master bond0
 
-- name: "Destruction du bond et activation propre"
+- name: Recharger le bonding
   ansible.builtin.shell: |
-    /sbin/ifdown bond0 ens34 ens35 2>/dev/null || true
-    /sbin/ip link delete bond0 2>/dev/null || true
-    /sbin/modprobe -r bonding 2>/dev/null || true
-    /sbin/modprobe bonding
-    /sbin/ip addr flush dev ens34 2>/dev/null || true
-    /sbin/ip addr flush dev ens35 2>/dev/null || true
-    /sbin/ifup ens34
-    /sbin/ifup ens35
-    /sbin/ifup bond0
-  become: yes
+    ifdown bond0 2>/dev/null || true
+    modprobe bonding
+    ifup bond0
