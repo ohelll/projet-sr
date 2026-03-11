@@ -1,43 +1,51 @@
 ---
-# === PARTIE SERVEUR ===
-- name: Installer le serveur NFS
+# =================
+# SERVEUR NFS
+# =================
+
+- name: Installer serveur NFS
   ansible.builtin.apt:
     name: nfs-kernel-server
     state: present
-  when: inventory_hostname == 'serveur_fichier'
+    update_cache: yes
+  when: "'serveur_fichier' in group_names"
 
-- name: Créer le répertoire à partager
+- name: Créer dossier partagé
   ansible.builtin.file:
     path: /home/partage
     state: directory
-    mode: '0777'
-  when: inventory_hostname == 'serveur_fichier'
+    mode: "0777"
+  when: "'serveur_fichier' in group_names"
 
-- name: Exposer les partages (Autorise tout le réseau 192.168.160.0/24)
+- name: Configurer exports
   ansible.builtin.copy:
     dest: /etc/exports
     content: |
       /home/partage 192.168.160.0/24(rw,sync,no_subtree_check)
-  when: inventory_hostname == 'serveur_fichier'
   notify: Relancer NFS
+  when: "'serveur_fichier' in group_names"
 
-# === PARTIE CLIENTS ===
-- name: Installer les outils client NFS
+# =================
+# CLIENTS
+# =================
+
+- name: Installer client NFS
   ansible.builtin.apt:
     name: nfs-common
     state: present
-  when: inventory_hostname != 'serveur_fichier'
+  when: "'clients' in group_names"
 
-- name: Créer le point de montage sur les clients
+- name: Créer point de montage
   ansible.builtin.file:
     path: /mnt/nfs_serveur
     state: directory
-  when: inventory_hostname != 'serveur_fichier'
+  when: "'clients' in group_names"
 
-- name: Monter le partage NFS
+- name: Monter NFS
   ansible.posix.mount:
     path: /mnt/nfs_serveur
     src: 192.168.160.150:/home/partage
     fstype: nfs
+    opts: defaults
     state: mounted
-  when: inventory_hostname != 'serveur_fichier'
+  when: "'clients' in group_names"
