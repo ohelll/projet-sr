@@ -3,8 +3,8 @@
 - name: Config Switch 1
   ansible.builtin.shell: "{{ item }}"
   loop:
-    - net add bridge bridge ports swp1 swp4
-    - net add bond bond0 bond slaves swp2 swp3
+    - net add bridge bridge ports swp1,swp4         
+    - net add bond bond0 bond slaves swp2-3        
     - net add bridge bridge ports bond0
     - net add bond bond0 bridge access 3
     - net add interface swp1 bridge access 1
