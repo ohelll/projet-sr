@@ -32,5 +32,8 @@
 - name: Recharger le bonding
   ansible.builtin.shell: |
     /sbin/ifdown bond0 2>/dev/null || true
+    /sbin/ip addr flush dev bond0 2>/dev/null || true
+    /sbin/ip route flush dev bond0 2>/dev/null || true
+    /sbin/ip link delete bond0 2>/dev/null || true
     /sbin/modprobe bonding
     /sbin/ifup bond0
