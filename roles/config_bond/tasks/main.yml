@@ -15,6 +15,7 @@
       iface bond0 inet static
           address 192.168.160.150
           netmask 255.255.255.192
+          gateway 192.168.160.190        
           bond-slaves ens34 ens35
           bond-mode 4
           bond-miimon 100
