@@ -15,10 +15,9 @@
 - name: Configurer les clients
   hosts: clients
   become: yes
-
   tasks:
-
-   - name: Config IP machine1
+    - name: Config IP machine1
+      when: inventory_hostname == "machine1"
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -26,10 +25,10 @@
           iface ens34 inet static
               address 192.168.160.1
               netmask 255.255.255.192
-              gateway 192.168.160.62        
-      when: inventory_hostname == "machine1"
+              gateway 192.168.160.62
 
     - name: Config IP machine2
+      when: inventory_hostname == "machine2"
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -38,7 +37,6 @@
               address 192.168.160.100
               netmask 255.255.255.192
               gateway 192.168.160.126
-      when: inventory_hostname == "machine2"
 
     - name: Redémarrer interface
       ansible.builtin.shell: |
