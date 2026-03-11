@@ -3,57 +3,54 @@
 # CONFIGURATION SWITCH 1 (Accès M1 + Serveur)
 # ==========================================
 - name: Configurer Switch 1 (Accès M1 + Serveur LACP)
-  community.network.cumulus_nclu:
-    commands:
-      - add bridge bridge vlan-aware yes
-      # Agrégation de liens pour la haute disponibilité du serveur
-      - add bond bond-serveur slaves swp2,swp3
-      - add bond bond-serveur bond-mode 4
-      - add bond bond-serveur bond-lacp-rate 1
-      - add bond bond-serveur bond-xmit-hash-policy layer3+4
-      - add interface bond-serveur bridge access 3
-      # Accès Machine 1 (VLAN 1)
-      - add interface swp1 bridge access 1
-      # Trunk vers le Switch 3 (Cœur de réseau)
-      - add interface swp4 bridge trunk vlans 1,3
-      - commit
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - net add bridge bridge vlan-aware yes
+    - net add bond bond-serveur slaves swp2,swp3
+    - net add bond bond-serveur bond-mode 4
+    - net add interface bond-serveur bridge access 3
+    - net add interface swp1 bridge access 1
+    - net add interface swp4 bridge trunk vlans 1,3
+    - net commit
+  when: inventory_hostname == 'switch1'
 
 # ==========================================
 # CONFIGURATION SWITCH 2 (Accès M2)
 # ==========================================
 - name: Configurer Switch 2 (Accès Machine 2)
-  community.network.cumulus_nclu:
-    commands:
-      - add bridge bridge vlan-aware yes
-      # Accès Machine 2 (VLAN 2)
-      - add interface swp1 bridge access 2
-      # Trunk vers le Switch 3 (Cœur de réseau)
-      - add interface swp2 bridge trunk vlans 2
-      - commit
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - net add bridge bridge vlan-aware yes
+    - net add interface swp1 bridge access 2
+    - net add interface swp2 bridge trunk vlans 2
+    - net commit
+  when: inventory_hostname == 'switch2'
 
 # ==========================================
 # CONFIGURATION SWITCH 3 (Routage L3 + Isolation)
 # ==========================================
 - name: Configurer Switch 3 (Passerelles et Filtrage)
-  community.network.cumulus_nclu:
-    commands:
-      - add bridge bridge vlan-aware yes
-      # Trunks venant de S1 et S2
-      - add interface swp1 bridge trunk vlans 1,3
-      - add interface swp2 bridge trunk vlans 2
-      # Création des passerelles L3 (SVI) pour le routage inter-VLAN
-      - add vlan 1 ip address 192.168.160.254/26
-      - add vlan 2 ip address 192.168.160.126/26
-      - add vlan 3 ip address 192.168.160.190/26
-      - commit
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - net add bridge bridge vlan-aware yes
+    - net add interface swp1 bridge trunk vlans 1,3
+    - net add interface swp2 bridge trunk vlans 2
+    - net add vlan 1 ip address 192.168.160.254/26
+    - net add vlan 2 ip address 192.168.160.126/26
+    - net add vlan 3 ip address 192.168.160.190/26
+    - net commit
+  when: inventory_hostname == 'switch3'
 
-# RÈGLES D'ISOLATION (Appliquées sur le Switch 3 uniquement)
+# ==========================================
+# RÈGLES D'ISOLATION (Appliquées sur le Switch 3)
+# ==========================================
 - name: ISOLATION - Bloquer le trafic de M1 vers M2
   ansible.builtin.iptables:
     chain: FORWARD
     source: 192.168.160.0/26
     destination: 192.168.160.64/26
     jump: DROP
+  when: inventory_hostname == 'switch3'
 
 - name: ISOLATION - Bloquer le trafic de M2 vers M1
   ansible.builtin.iptables:
@@ -61,3 +58,4 @@
     source: 192.168.160.64/26
     destination: 192.168.160.0/26
     jump: DROP
+  when: inventory_hostname == 'switch3'
