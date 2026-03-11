@@ -18,7 +18,7 @@
           address 192.168.160.150
           netmask 255.255.255.192
           gateway 192.168.160.190
-          bond-slaves none
+          bond-slaves ens34 ens35
           bond-mode 4
           bond-miimon 100
           bond-lacp-rate 1
@@ -32,11 +32,15 @@
       iface ens35 inet manual
           bond-master bond0
 
-- name: Activer le bond0 sans toucher a ens33
+- name: Activer bond0 sans toucher a ens33
   ansible.builtin.shell: |
-    ifdown ens34 ens35 bond0 2>/dev/null || true
-    ip addr flush ens34 || true
-    ip addr flush ens35 || true
+    ifdown ens34 2>/dev/null || true
+    ifdown ens35 2>/dev/null || true
+    ifdown bond0 2>/dev/null || true
+
+    ip addr flush dev ens34 || true
+    ip addr flush dev ens35 || true
+
     ifup ens34
     ifup ens35
     ifup bond0
