@@ -1,10 +1,10 @@
 ---
-- name: Installer le paquet ifenslave
+- name: Installer ifenslave
   ansible.builtin.apt:
     name: ifenslave
     state: present
 
-- name: Configurer le Bond Serveur
+- name: Ecrire la configuration du Bond0 (LAN 2 et 3)
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/bond0
     content: |
@@ -27,7 +27,11 @@
       iface ens35 inet manual
           bond-master bond0
 
-- name: Relancer le réseau
-  ansible.builtin.service:
-    name: networking
-    state: restarted
+- name: Force le nettoyage et redemarrage reseau
+  ansible.builtin.shell: |
+    ip link set ens34 down || true
+    ip link set ens35 down || true
+    ip addr flush ens34 || true
+    ip addr flush ens35 || true
+    systemctl restart networking
+  become: yes
