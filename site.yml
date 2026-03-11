@@ -1,31 +1,7 @@
----
-# ==========================================
-# 1. CONFIGURATION DES COMMUTATEURS CUMULUS
-# ==========================================
-- name: Configuration L2/L3 des commutateurs
-  hosts: switches
-  become: yes
-  roles:
-    - config_vlan
-
-# ==========================================
-# 2. CONFIGURATION DU SERVEUR (Bonding + NFS)
-# ==========================================
-- name: Configuration Redondance et Serveur NFS
-  hosts: serveur_fichier
-  become: yes
-  roles:
-    - config_bond
-    - config_nfs
-
-# ==========================================
-# 3. CONFIGURATION DES CLIENTS
-# ==========================================
-- name: Configuration IP Machine 1 (VLAN 1)
+- name: Configurer Machine 1
   hosts: machine1
-  become: yes
   tasks:
-    - name: Configurer l'IP et la passerelle
+    - name: IP Prod M1
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -34,16 +10,11 @@
               address 192.168.160.1
               netmask 255.255.255.192
               gateway 192.168.160.254
-    - name: Redémarrer le réseau
-      ansible.builtin.service:
-        name: networking
-        state: restarted
 
-- name: Configuration IP Machine 2 (VLAN 2)
+- name: Configurer Machine 2
   hosts: machine2
-  become: yes
   tasks:
-    - name: Configurer l'IP et la passerelle
+    - name: IP Prod M2
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
@@ -52,13 +23,3 @@
               address 192.168.160.100
               netmask 255.255.255.192
               gateway 192.168.160.126
-    - name: Redémarrer le réseau
-      ansible.builtin.service:
-        name: networking
-        state: restarted
-
-- name: Déploiement NFS sur les clients
-  hosts: machine1, machine2
-  become: yes
-  roles:
-    - config_nfs
