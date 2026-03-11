@@ -42,8 +42,8 @@
 
     - name: Redémarrer interface
       ansible.builtin.shell: |
-        ip addr flush dev ens34 || true
-        ifup ens34
+        /sbin/ip addr flush dev ens34 || true
+        /sbin/ifup ens34
 
 - name: Monter le NFS sur les clients
   hosts: clients
