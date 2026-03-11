@@ -1,5 +1,20 @@
+---
+- name: Configurer les Switches
+  hosts: switches
+  become: yes
+  roles:
+    - config_vlan
+
+- name: Configurer le Serveur
+  hosts: serveur_fichier
+  become: yes
+  roles:
+    - config_bond
+    - config_nfs
+
 - name: Configurer Machine 1
   hosts: machine1
+  become: yes
   tasks:
     - name: IP Prod M1
       ansible.builtin.copy:
@@ -10,9 +25,13 @@
               address 192.168.160.1
               netmask 255.255.255.192
               gateway 192.168.160.254
+    - ansible.builtin.service:
+        name: networking
+        state: restarted
 
 - name: Configurer Machine 2
   hosts: machine2
+  become: yes
   tasks:
     - name: IP Prod M2
       ansible.builtin.copy:
@@ -23,3 +42,12 @@
               address 192.168.160.100
               netmask 255.255.255.192
               gateway 192.168.160.126
+    - ansible.builtin.service:
+        name: networking
+        state: restarted
+
+- name: Monter NFS sur les clients
+  hosts: machine1, machine2
+  become: yes
+  roles:
+    - config_nfs
