@@ -1,50 +1,73 @@
 ---
-- name: Configurer les Switches
-  hosts: switches
-  become: yes
-  roles:
-    - config_vlan
-
-- name: Configurer le serveur NFS
-  hosts: serveur_fichier
-  become: yes
-  roles:
-    - config_bond
-    - config_nfs
-
-- name: Configurer les clients
-  hosts: clients
+- name: Configuration des Clients et du Serveur NFS
+  hosts: clients, storage
   become: yes
   tasks:
-    - name: Config IP machine1
-      when: inventory_hostname == "machine1"
+    - name: Configurer l'interface de production (Static Route sans casser le SSH)
       ansible.builtin.copy:
         dest: /etc/network/interfaces.d/lan_prod
         content: |
           auto ens34
           iface ens34 inet static
+              {% if inventory_hostname == 'machine1' %}
               address 192.168.160.1
               netmask 255.255.255.192
-              gateway 192.168.160.62
-
-    - name: Config IP machine2
-      when: inventory_hostname == "machine2"
-      ansible.builtin.copy:
-        dest: /etc/network/interfaces.d/lan_prod
-        content: |
-          auto ens34
-          iface ens34 inet static
-              address 192.168.160.100
+              up ip route add 192.168.160.0/24 via 192.168.160.62 dev ens34 || true
+              {% elif inventory_hostname == 'machine2' %}
+              address 192.168.160.65
               netmask 255.255.255.192
-              gateway 192.168.160.126
+              up ip route add 192.168.160.0/24 via 192.168.160.126 dev ens34 || true
+              {% elif inventory_hostname == 'serveur_nfs' %}
+              address 192.168.160.150
+              netmask 255.255.255.192
+              up ip route add 192.168.160.0/24 via 192.168.160.190 dev ens34 || true
+              {% endif %}
 
-    - name: Redémarrer interface
+    - name: Redémarrer l'interface de production
       ansible.builtin.shell: |
-        /sbin/ip addr flush dev ens34 || true
+        /sbin/ip link set ens34 up || true
+        /sbin/ifdown ens34 || true
         /sbin/ifup ens34
 
-- name: Monter le NFS sur les clients
-  hosts: clients
-  become: yes
-  roles:
-    - config_nfs
+    - name: Installation des paquets NFS
+      ansible.builtin.apt:
+        name: "{{ 'nfs-kernel-server' if inventory_hostname == 'serveur_nfs' else 'nfs-common' }}"
+        state: present
+        update_cache: yes
+
+    # --- Configuration spécifique au Serveur NFS ---
+    - name: Créer le dossier partagé sur le serveur
+      ansible.builtin.file:
+        path: /home/partage
+        state: directory
+        mode: '0777'
+      when: inventory_hostname == "serveur_nfs"
+
+    - name: Configurer les exports NFS
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: "/home/partage 192.168.160.0/24(rw,sync,no_subtree_check)"
+      when: inventory_hostname == "serveur_nfs"
+      notify: restart_nfs
+
+    # --- Configuration spécifique aux Clients (M1 et M2) ---
+    - name: Créer le point de montage sur les clients
+      ansible.builtin.file:
+        path: /mnt/nfs_serveur
+        state: directory
+      when: inventory_hostname != "serveur_nfs"
+
+    - name: Monter le dossier NFS
+      ansible.posix.mount:
+        src: 192.168.160.150:/home/partage
+        path: /mnt/nfs_serveur
+        fstype: nfs
+        opts: rw,sync
+        state: mounted
+      when: inventory_hostname != "serveur_nfs"
+
+  handlers:
+    - name: restart_nfs
+      ansible.builtin.service:
+        name: nfs-kernel-server
+        state: restarted
