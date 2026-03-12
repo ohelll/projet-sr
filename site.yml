@@ -19,7 +19,7 @@
         chmod 777 /home/partage
         echo "/home/partage 192.168.160.0/24(rw,sync,no_subtree_check)" > /etc/exports
         exportfs -a
-        systemctl restart nfs-kernel-server
+        systemctl restart nfs-kernel-server || true
 
 # === 3. CONFIGURATION DES UTILISATEURS (CLIENTS) ===
 - name: Configuration des Clients
