@@ -1,0 +1,15 @@
+---
+- name: Configuration de la Topologie Réseau sur les switches
+  hosts: switches
+  become: yes
+  tasks:
+    - name: Ajouter le nouveau port au bridge
+      ansible.builtin.shell: |
+        net add bridge bridge ports swp1-3
+        net commit
+
+    - name: Désactiver le mode STP
+      ansible.builtin.shell: |
+        sudo brctl stp bridge no
+
+
