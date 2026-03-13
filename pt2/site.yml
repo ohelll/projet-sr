@@ -1,27 +1,8 @@
 ---
-# === 1. CONFIGURATION RÉSEAU (SWITCHES) ===
-- name: Configuration de la Topologie Réseau
+- name: Configuration de la Topologie Réseau sur les switches
   hosts: switches
   become: yes
+  
 
 
-# === 3. CONFIGURATION DES UTILISATEURS (CLIENTS) ===
-- name: Configuration des Clients
-  hosts: clients
-  become: yes
-  tasks:
-    - name: Configurer l'IP de production (ens34)
-      ansible.builtin.copy:
-        dest: /etc/network/interfaces.d/lan_prod
-        content: |
-          auto ens34
-          iface ens34 inet static
-              address {{ '192.168.160.1' if inventory_hostname == 'machine1' else '192.168.160.100' }}
-              netmask 255.255.255.192
-              up ip route add 192.168.160.0/24 via {{ '192.168.160.62' if inventory_hostname == 'machine1' else '192.168.160.126' }} dev ens34 || true
 
-    - name: Activer interface et Monter le partage NFS
-      ansible.builtin.shell: |
-        /sbin/ifup ens34 || true
-        mkdir -p /mnt/nfs_serveur
-        mount -t nfs 192.168.160.150:/home/partage /mnt/nfs_serveur || true
