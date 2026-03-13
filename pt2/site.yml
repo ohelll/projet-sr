@@ -2,6 +2,10 @@
 - name: Configuration de la Topologie Réseau sur les switches
   hosts: switches
   become: yes
+  tasks:
+    - name: Désactiver le mode STP
+      ansible.builtin.shell: |
+        sudo brctl stp bridge no
   
 
 
