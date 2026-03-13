@@ -10,6 +10,6 @@
 
     - name: Désactiver le mode STP
       ansible.builtin.shell: |
-        sudo brctl stp bridge yes
+        sudo bridge-stp bridge stop
 
 
