@@ -21,7 +21,7 @@
         insertafter: "^iface bridge"
         state: present
 
-    - name: Redémarrer le réseau (Asynchrone pour survivre à la tempête)
+    - name: Redémarrer le réseau 
       ansible.builtin.shell: sleep 2 && systemctl restart networking
       async: 10
       poll: 0
