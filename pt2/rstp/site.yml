@@ -1,1 +1,30 @@
+---
+- name: Configuration de la Topologie Réseau - Mode RSTP
+  hosts: switches
+  become: yes
 
+  tasks:
+    - name: Ajouter les ports swp1-3 au bridge
+      ansible.builtin.shell: |
+        net add bridge bridge ports swp1-3
+        net commit
+
+    - name: Activer le protocole STP de base
+      ansible.builtin.lineinfile:
+        path: /etc/network/interfaces
+        line: "    bridge-stp on"
+        insertafter: "^iface bridge"
+        state: present
+
+    - name: Forcer le protocole en mode RSTP
+      ansible.builtin.lineinfile:
+        path: /etc/network/interfaces
+        line: "    mstpctl-forcevers rstp"
+        insertafter: "^iface bridge"
+        state: present
+
+    - name: Redémarrer le réseau proprement
+      ansible.builtin.shell: sleep 2 && systemctl restart networking
+      async: 10
+      poll: 0
+      ignore_errors: yes
