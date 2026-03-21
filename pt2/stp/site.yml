@@ -1,1 +1,28 @@
+---
+- name: Configuration de la Topologie Réseau sur les switches
+  hosts: switches
+  become: yes
 
+  tasks:
+    - name: Ajouter les ports swp1-3 au bridge
+      ansible.builtin.shell: |
+        net add bridge bridge ports swp1-3
+        net commit
+
+    #- name: Désactiver le mode STP (en direct)
+      #ansible.builtin.shell: bridge-stp bridge stop
+      # On ignore les erreurs au cas où le STP serait déjà coupé
+     # ignore_errors: yes 
+
+    - name: Ajouter "bridge-stp off" dans /etc/network/interfaces
+      ansible.builtin.lineinfile:
+        path: /etc/network/interfaces
+        line: "    bridge-stp on"
+        insertafter: "^iface bridge"
+        state: present
+
+    - name: Redémarrer le réseau 
+      ansible.builtin.shell: sleep 2 && systemctl restart networking
+      async: 10
+      poll: 0
+      ignore_errors: yes
