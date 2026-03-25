@@ -23,7 +23,7 @@
         net commit
 
     - name: Config Core (SW3)
-      when: "inventory_hostname in groups['core_switch']'"
+      when: "inventory_hostname == 'switch3'"
       ansible.builtin.shell: |
         net add bridge bridge vlan-aware yes
         net add bridge bridge ports swp1,swp2
