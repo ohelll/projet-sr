@@ -19,7 +19,7 @@
         net add bond bond-m2 bond slaves swp2
         net add bond bond-m2 clag id 2
         net add interface bond-m2 bridge access 20
-        net add interface swp5 bridge trunk vlans 10,20
+        net add interface swp5 bridge trunk vlans 1,2
         net commit
 
     - name: Config Core (SW3)
@@ -27,6 +27,6 @@
       ansible.builtin.shell: |
         net add bridge bridge vlan-aware yes
         net add bridge bridge ports swp1,swp2
-        net add vlan 10 ip address 192.168.1.254/24
-        net add vlan 20 ip address 192.168.2.254/24
+        net add vlan 1 ip address 192.168.1.254/24
+        net add vlan 2 ip address 192.168.2.254/24
         net commit
