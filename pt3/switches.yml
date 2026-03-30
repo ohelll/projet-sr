@@ -128,3 +128,16 @@
     - name: Application Core
       ansible.builtin.shell: ifreload -a
       ignore_errors: yes
+
+    - name: Activer le forwarding sur le switch 3
+      ansible.builtin.sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        state: present
+
+    - name: S'assurer que les interfaces de routage sont UP
+      ansible.builtin.shell: |
+        ip link set vlan10 up
+        ip link set vlan20 up
+      ignore_errors: yes
+
