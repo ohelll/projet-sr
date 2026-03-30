@@ -1,0 +1,19 @@
+---
+- name: Installer serveur NFS
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+    update_cache: yes
+
+- name: Créer dossier partagé avec les bons droits
+  ansible.builtin.file:
+    path: /home/partage
+    state: directory
+    mode: "0777"
+
+- name: Configurer le fichier exports (Méthode propre)
+  ansible.builtin.copy:
+    dest: /etc/exports
+    content: |
+      /home/partage 192.168.160.0/24(rw,sync,no_subtree_check)
+  notify: Relancer NFS

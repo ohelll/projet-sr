@@ -1,51 +1,8 @@
 ---
-# =================
-# SERVEUR NFS
-# =================
-
-- name: Installer serveur NFS
-  ansible.builtin.apt:
-    name: nfs-kernel-server
-    state: present
-    update_cache: yes
+- name: Charger les taches serveur
+  ansible.builtin.include_tasks: serveur.yml
   when: "'serveur_fichier' in group_names"
 
-- name: Créer dossier partagé
-  ansible.builtin.file:
-    path: /home/partage
-    state: directory
-    mode: "0777"
-  when: "'serveur_fichier' in group_names"
-
-- name: Configurer exports
-  ansible.builtin.copy:
-    dest: /etc/exports
-    content: |
-      /home/partage 192.168.160.0/24(rw,sync,no_subtree_check)
-  notify: Relancer NFS
-  when: "'serveur_fichier' in group_names"
-
-# =================
-# CLIENTS
-# =================
-
-- name: Installer client NFS
-  ansible.builtin.apt:
-    name: nfs-common
-    state: present
-  when: "'clients' in group_names"
-
-- name: Créer point de montage
-  ansible.builtin.file:
-    path: /mnt/nfs_serveur
-    state: directory
-  when: "'clients' in group_names"
-
-- name: Monter NFS
-  ansible.posix.mount:
-    path: /mnt/nfs_serveur
-    src: 192.168.160.150:/home/partage
-    fstype: nfs
-    opts: defaults
-    state: mounted
+- name: Charger les taches client
+  ansible.builtin.include_tasks: client.yml
   when: "'clients' in group_names"

@@ -1,0 +1,35 @@
+---
+- name: Installer le paquet client NFS
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
+- name: Nettoyer les anciens montages (Force unmount)
+  ansible.builtin.shell: umount -l /mnt/nfs_serveur || true
+  changed_when: false
+ 
+- name: Configurer l'IP (ens34)
+  ansible.builtin.copy:
+    dest: /etc/network/interfaces.d/lan_prod
+    content: |
+      auto ens34
+      iface ens34 inet static
+          address {{ '192.168.160.1' if inventory_hostname == 'machine1' else '192.168.160.100' }}
+          netmask 255.255.255.192
+          up ip route add 192.168.160.0/24 via {{ '192.168.160.62' if inventory_hostname == 'machine1' else '192.168.160.126' }} dev ens34 || true
+
+- name: Créer le point de montage
+  ansible.builtin.file:
+    path: /mnt/nfs_serveur
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Monter le partage NFS
+  ansible.posix.mount:
+    path: /mnt/nfs_serveur
+    src: 192.168.160.150:/home/partage
+    fstype: nfs
+    opts: defaults
+    state: mounted
