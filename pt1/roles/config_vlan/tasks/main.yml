@@ -32,8 +32,7 @@
     - net commit
   when: inventory_hostname == "switch3"
 
-# === RÈGLES D'ISOLATION (iptables sur Switch 3) ===
-- name: ISOLATION - Bloquer M1 <-> M2
+- name: Isolation, bloquer M1 <-> M2
   ansible.builtin.iptables:
     chain: FORWARD
     source: "{{ item.src }}"

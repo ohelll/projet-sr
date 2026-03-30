@@ -1,5 +1,5 @@
 ---
-- name: Installer bonding
+- name: Installation du bonding
   ansible.builtin.apt:
     name:
       - ifenslave
