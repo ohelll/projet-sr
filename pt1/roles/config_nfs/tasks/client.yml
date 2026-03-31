@@ -1,13 +1,12 @@
 ---
-- name: Installer le paquet client NFS
+- name: Nettoyer les anciens montages
+  ansible.builtin.shell: umount -l /mnt/nfs_client || true
+
+- name: Installer le module client NFS
   ansible.builtin.apt:
     name: nfs-common
     state: present
 
-- name: Nettoyer les anciens montages (Force unmount)
-  ansible.builtin.shell: umount -l /mnt/nfs_serveur || true
-  changed_when: false
- 
 - name: Configurer l'IP (ens34)
   ansible.builtin.copy:
     dest: /etc/network/interfaces.d/lan_prod
@@ -20,7 +19,7 @@
 
 - name: Créer le point de montage
   ansible.builtin.file:
-    path: /mnt/nfs_serveur
+    path: /mnt/nfs_client
     state: directory
     mode: '0755'
     owner: root
@@ -28,7 +27,7 @@
 
 - name: Monter le partage NFS
   ansible.posix.mount:
-    path: /mnt/nfs_serveur
+    path: /mnt/nfs_client
     src: 192.168.160.150:/home/partage
     fstype: nfs
     opts: defaults
