@@ -1,0 +1,9 @@
+---
+# Fichier: site.yml (Master Playbook) 
+# A placer à la racine du dossier pt3/
+
+# 1. Configuration de l'infrastructure réseau (Access + Core)
+- import_playbook: roles/switches/main.yml
+
+# 2. Configuration des machines clientes (Bonding LACP)
+- import_playbook: roles/hosts/main.yml
