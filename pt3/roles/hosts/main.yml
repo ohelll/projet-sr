@@ -1,0 +1,25 @@
+- name: Configuration Bonding LACP Machines
+  hosts: machines
+  become: yes
+  tasks:
+    - name: Forger le tunnel LACP
+      ansible.builtin.shell: |
+        ip link delete bond0 2>/dev/null || true
+        ip addr flush dev ens34 2>/dev/null || true
+        ip addr flush dev ens35 2>/dev/null || true
+        ip link add bond0 type bond mode 802.3ad miimon 100
+        ip link set ens34 down
+        ip link set ens35 down
+        ip link set ens34 master bond0
+        ip link set ens35 master bond0
+        ip link set ens34 up
+        ip link set ens35 up
+        ip link set bond0 up
+        {% if inventory_hostname == 'machine1' %}
+        ip addr add 192.168.1.1/24 dev bond0
+        ip route replace default via 192.168.1.254
+        {% else %}
+        ip addr add 192.168.2.1/24 dev bond0
+        ip route replace default via 192.168.2.254
+        {% endif %}
+      ignore_errors: yes
