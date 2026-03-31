@@ -3,7 +3,6 @@
   ansible.builtin.apt:
     name:
       - ifenslave
-      - net-tools
     state: present
     update_cache: yes
 
