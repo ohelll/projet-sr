@@ -1,28 +1,33 @@
 ---
-- name: Configuration de la Topologie Réseau sur les switches
+---
+- name: Phase No STP - Demonstration de la boucle
   hosts: switches
   become: yes
 
   tasks:
-    - name: Ajouter les ports swp1-3 au bridge
-      ansible.builtin.shell: |
-        net add bridge bridge ports swp1-3
-        net commit
+    - name: Configurer le bridge sans STP (Mode boucle active)
+      ansible.builtin.copy:
+        dest: /etc/network/interfaces
+        content: |
+          auto lo
+          iface lo inet loopback
 
-    #- name: Désactiver le mode STP (en direct)
-      #ansible.builtin.shell: bridge-stp bridge stop
-      # On ignore les erreurs au cas où le STP serait déjà coupé
-     # ignore_errors: yes 
+          auto eth0
+          iface eth0
+              address {{ ansible_host }}/24
+              vrf mgmt
 
-    - name: Ajouter "bridge-stp off" dans /etc/network/interfaces
-      ansible.builtin.lineinfile:
-        path: /etc/network/interfaces
-        line: "    bridge-stp off"
-        insertafter: "^iface bridge"
-        state: present
+          auto bridge
+          iface bridge
+              bridge-ports swp1 swp2 swp3
+              bridge-stp off
+              bridge-vlan-aware yes
 
-    - name: Redémarrer le réseau 
-      ansible.builtin.shell: sleep 2 && systemctl restart networking
-      async: 10
-      poll: 0
-      ignore_errors: yes
+          auto mgmt
+          iface mgmt
+              address 127.0.0.1/8
+              address ::1/128
+              vrf-table auto
+
+    - name: Appliquer la configuration
+      ansible.builtin.shell: ifreload -a
