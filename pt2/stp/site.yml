@@ -1,23 +1,36 @@
 ---
-- name: Configuration de la Topologie Réseau sur les switches
+---
+- name: Nettoyage et Configuration de la Topologie Réseau
   hosts: switches
   become: yes
 
   tasks:
-    - name: Ajouter les ports swp1-3 au bridge
-      ansible.builtin.shell: |
-        net add bridge bridge ports swp1-3
-        net commit
 
-    - name: Ajouter "bridge-stp off" dans /etc/network/interfaces
-      ansible.builtin.lineinfile:
-        path: /etc/network/interfaces
-        line: "    Bridge-stp yes"
-        insertafter: "^iface bridge"
-        state: present
+    - name: Appliquer une configuration interface propre (écrase les doublons)
+      ansible.builtin.copy:
+        dest: /etc/network/interfaces
+        content: |
+          # Fichier généré par Ansible - Configuration Propre
+          auto lo
+          iface lo inet loopback
 
-    - name: Redémarrer le réseau 
-      ansible.builtin.shell: sleep 2 && systemctl restart networking
-      async: 10
-      poll: 0
-      ignore_errors: yes
+          auto eth0
+          iface eth0
+              address {{ ansible_host }}/24
+              vrf mgmt
+
+          auto bridge
+          iface bridge
+              bridge-ports swp1 swp2 swp3
+              bridge-stp yes
+              bridge-vlan-aware yes
+              mstpctl-forcevers stp
+
+          auto mgmt
+          iface mgmt
+              address 127.0.0.1/8
+              address ::1/128
+              vrf-table auto
+
+    - name: Recharger la configuration réseau
+      ansible.builtin.shell: ifreload -a
