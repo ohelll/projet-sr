@@ -12,7 +12,7 @@
     - name: Ajouter "bridge-stp off" dans /etc/network/interfaces
       ansible.builtin.lineinfile:
         path: /etc/network/interfaces
-        line: "    bridge-stp on"
+        line: "    Bridge-stp yes"
         insertafter: "^iface bridge"
         state: present
 
