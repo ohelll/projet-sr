@@ -6,7 +6,7 @@
 
   tasks:
 
-    - name: Appliquer une configuration interface propre (écrase les doublons)
+    - name: Appliquer une configuration interface 
       ansible.builtin.copy:
         dest: /etc/network/interfaces
         content: |
