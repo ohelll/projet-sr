@@ -9,11 +9,6 @@
         net add bridge bridge ports swp1-3
         net commit
 
-    #- name: Désactiver le mode STP (en direct)
-      #ansible.builtin.shell: bridge-stp bridge stop
-      # On ignore les erreurs au cas où le STP serait déjà coupé
-     # ignore_errors: yes 
-
     - name: Ajouter "bridge-stp off" dans /etc/network/interfaces
       ansible.builtin.lineinfile:
         path: /etc/network/interfaces
